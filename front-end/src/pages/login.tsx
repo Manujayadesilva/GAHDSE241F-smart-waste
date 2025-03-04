@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { getUserRole, login } from "../firebase/auth";
+import { login } from "../firebase/auth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import "../app/globals.css";
@@ -14,18 +14,19 @@ const Login = () => {
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      const { user } = await login(email, password);
-      const role = await getUserRole(user.uid); // Fetch role from Firestore
+      const { user, role } = await login(email, password);
+
+      // Redirect based on role
       if (role === "admin") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/dashboard");
+        router.replace("/admin/dashboard"); // Redirect to Admin Dashboard
+      } 
+      if (role == "user") {
+        router.replace("/dashboard"); // Redirect to User Dashboard
       }
     } catch (err: any) {
       setError(err.message);
     }
   };
-  
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -50,7 +51,6 @@ const Login = () => {
               required
               autoComplete="username"
             />
-
           </div>
 
           <div className="mb-4">
