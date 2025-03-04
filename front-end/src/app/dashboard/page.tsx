@@ -1,31 +1,48 @@
-"use client";
+"use client"
 import { useEffect, useState } from "react";
 import { auth, getUserRole } from "../../firebase/auth";
 import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 
 const UserDashboard = () => {
-
-    const [role, setRole] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-  if (typeof window !== "undefined") {
     const checkUserRole = async () => {
-      if (!auth.currentUser) {
+      const user = auth.currentUser;
+
+      // Ensure the user is loaded before checking role
+      if (!user) {
+        console.log("User not found, redirecting...");
         router.push("/login");
         return;
       }
-      const userRole = await getUserRole(auth.currentUser.uid);
-      setRole(userRole);
-      if (userRole === "admin") {
-        router.push("/admin/dashboard");
+
+      try {
+        const userRole = await getUserRole(user.uid);
+        console.log("User Role:", userRole);
+        setRole(userRole);
+
+        // Redirect only if the role is admin
+        if (userRole === "admin") {
+          router.push("/admin/dashboard");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+        router.push("/login");
       }
     };
-    checkUserRole();
-  }
-}, [router]);
-  
+
+    // Wait for Firebase authentication state to update
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        checkUserRole();
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener
+  }, [router]);
 
   if (!role) return <p>Loading...</p>;
 

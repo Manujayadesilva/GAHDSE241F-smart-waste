@@ -1,9 +1,10 @@
-"use client";
+"use client";  // ✅ Ensure this is at the top
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const Sidebar = () => {
-  const pathname = usePathname();
+  const pathname = usePathname() || ""; // ✅ Add fallback to prevent undefined
 
   return (
     <aside className="bg-gray-800 text-white w-64 h-screen p-6 fixed top-0 left-0">
