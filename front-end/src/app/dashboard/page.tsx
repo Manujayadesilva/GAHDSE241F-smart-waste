@@ -10,6 +10,7 @@ const UserDashboard = () => {
   const router = useRouter();
 
   useEffect(() => {
+  if (typeof window !== "undefined") {
     const checkUserRole = async () => {
       if (!auth.currentUser) {
         router.push("/login");
@@ -22,7 +23,8 @@ const UserDashboard = () => {
       }
     };
     checkUserRole();
-  }, [auth.currentUser?.uid, router]);
+  }
+}, [router]);
   
 
   if (!role) return <p>Loading...</p>;
