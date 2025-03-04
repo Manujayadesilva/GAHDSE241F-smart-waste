@@ -7,7 +7,6 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header/>
-      {/* <Login/> */}
       <main className="flex flex-col items-center justify-center flex-grow text-center p-8">
         <h1 className="text-4xl font-bold mb-4">Welcome to Smart Waste Management</h1>
         <p className="text-lg text-gray-600 mb-6">
