@@ -5,6 +5,7 @@ import Sidebar from "../../components/Sidebar";
 import { fetchBinsData } from "../../firebase/db";
 import { Doughnut, Bar } from "react-chartjs-2";
 import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
+import GoogleMapComponent from "@/components/GoogleMap";
 
 Chart.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
@@ -43,6 +44,12 @@ const UserDashboard = () => {
             <p className="text-2xl font-semibold">{(binLevels.reduce((a, b) => a + b, 0) / binLevels.length).toFixed(1)}%</p>
           </div>
         </div>
+
+        <div className="bg-white p-6 rounded-lg shadow mt-8">
+           <h2 className="text-xl font-bold mb-4">Bin Locations</h2>
+            <GoogleMapComponent />
+        </div>
+
 
         {/* 📌 Charts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
