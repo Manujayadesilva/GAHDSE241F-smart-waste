@@ -1,69 +1,88 @@
-"use client"
+"use client";
+
 import { useEffect, useState } from "react";
-import { auth, getUserRole } from "../../firebase/auth";
-import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
+import { fetchBinsData } from "../../firebase/db";
+import { Doughnut, Bar } from "react-chartjs-2";
+import { Chart, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from "chart.js";
+
+Chart.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 const UserDashboard = () => {
-  const [role, setRole] = useState<string | null>(null);
-  const router = useRouter();
+  const [bins, setBins] = useState<any>(null);
 
   useEffect(() => {
-    const checkUserRole = async () => {
-      const user = auth.currentUser;
+    fetchBinsData(setBins);
+  }, []);
 
-      // Ensure the user is loaded before checking role
-      if (!user) {
-        console.log("User not found, redirecting...");
-        router.push("/login");
-        return;
-      }
+  if (!bins) return <p className="text-center mt-10">Loading bins data...</p>;
 
-      try {
-        const userRole = await getUserRole(user.uid);
-        console.log("User Role:", userRole);
-        setRole(userRole);
-
-        // Redirect only if the role is admin
-        if (userRole === "admin") {
-          router.push("/admin/dashboard");
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-        router.push("/login");
-      }
-    };
-
-    // Wait for Firebase authentication state to update
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        checkUserRole();
-      }
-    });
-
-    return () => unsubscribe(); // Cleanup listener
-  }, [router]);
-
-  if (!role) return <p>Loading...</p>;
+  const binLevels = Object.values(bins).map((bin: any) => bin.level);
+  const binLocations = Object.values(bins).map((bin: any) => bin.location);
+  const fullBins = binLevels.filter((level) => level >= 75).length;
 
   return (
     <div className="flex">
       <Sidebar />
-      <main className="ml-64 p-8 w-full">
+      <main className="ml-64 p-8 w-full bg-gray-100 min-h-screen">
         <h1 className="text-3xl font-bold mb-4">User Dashboard</h1>
-        <p className="text-gray-600">Track your waste bins and access waste management services.</p>
-        <div className="grid grid-cols-3 gap-6 mt-6">
-          <div className="bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold">Your Bins</h2>
-            <p className="text-2xl">5</p>
+        <p className="text-gray-600">Track your waste bins and access services.</p>
+
+        {/* 📌 Bin Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-bold">Total Bins</h2>
+            <p className="text-2xl font-semibold">{Object.keys(bins).length}</p>
           </div>
-          <div className="bg-white p-6 rounded shadow">
+          <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-bold">Full Bins</h2>
-            <p className="text-2xl">2</p>
+            <p className="text-2xl font-semibold">{fullBins}</p>
           </div>
-          <div className="bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold">Pickup Requests</h2>
-            <p className="text-2xl">1</p>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-bold">Average Fill Level</h2>
+            <p className="text-2xl font-semibold">{(binLevels.reduce((a, b) => a + b, 0) / binLevels.length).toFixed(1)}%</p>
+          </div>
+        </div>
+
+        {/* 📌 Charts */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {/* Doughnut Chart: Bin Status */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-bold mb-4">Bin Fill Levels</h2>
+            <Doughnut
+              data={{
+                labels: ["Full (75-100%)", "Half-Full (40-74%)", "Low (0-39%)"],
+                datasets: [
+                  {
+                    label: "Bins",
+                    data: [
+                      binLevels.filter((level) => level >= 75).length,
+                      binLevels.filter((level) => level >= 40 && level < 75).length,
+                      binLevels.filter((level) => level < 40).length,
+                    ],
+                    backgroundColor: ["#ff4d4d", "#ffcc00", "#66cc66"],
+                  },
+                ],
+              }}
+            />
+          </div>
+
+          {/* Bar Chart: Bin Levels by Location */}
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-bold mb-4">Waste Levels by Location</h2>
+            <Bar
+              data={{
+                labels: binLocations,
+                datasets: [
+                  {
+                    label: "Fill Level (%)",
+                    data: binLevels,
+                    backgroundColor: "#007bff",
+                  },
+                ],
+              }}
+              options={{ responsive: true }}
+            />
           </div>
         </div>
       </main>
